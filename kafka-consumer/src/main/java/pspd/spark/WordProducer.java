@@ -1,4 +1,4 @@
-package pspd.daviantonio.spark;
+package pspd.spark;
 
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
