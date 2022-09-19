@@ -74,7 +74,7 @@ public class WordProducer {
 				return f;
 			}).collect(Collectors.toList());
 		} else {
-			jsonTweets = jsonSTweettream.limit(5).collect(Collectors.toList());
+			jsonTweets = jsonSTweettream.limit(RecentTweetSearcher.TWEET_LIMIT).collect(Collectors.toList());
 		}
 
 		Dataset<String> tweets = sparkSession.createDataset(

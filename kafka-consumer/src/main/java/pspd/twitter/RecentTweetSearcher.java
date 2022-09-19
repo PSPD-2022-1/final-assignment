@@ -25,6 +25,7 @@ import com.twitter.clientlib.model.RulesLookupResponse;
 import com.twitter.clientlib.model.Tweet;
 
 public class RecentTweetSearcher {
+	public static final int TWEET_LIMIT = 100;
 
 	public static List<Post> getPosts(String query) {
 		String twitterBearerToken = System.getenv("TWITTER_BEARER_TOKEN");
@@ -63,7 +64,7 @@ public class RecentTweetSearcher {
 		TwitterApi apiInstance = new TwitterApi(twitterCredentialsBearer);
 		Get2TweetsSearchRecentResponse response;
 		try {
-			response = apiInstance.tweets().tweetsRecentSearch(query).execute();
+			response = apiInstance.tweets().tweetsRecentSearch(query).maxResults(TWEET_LIMIT).execute();
 
 			tweets = response.getData();
 		} catch (ApiException e) {

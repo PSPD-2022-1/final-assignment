@@ -17,21 +17,12 @@ public class TopicUtil {
 
 	public static final String TWEETS_TOPIC_NAME = "tweets";
 	public static final String WORDS_TOPIC_NAME = "tweetWords";
-	
-	public static final String INPUT_TOPIC_NAME = "words";
-
-	public static final String OUTPUT_WORD6_TOPIC_NAME = "words-length-6";
-	public static final String OUTPUT_WORD8_TOPIC_NAME = "words-length-8";
-	public static final String OUTPUT_WORD11_TOPIC_NAME = "words-length-11";
-
-	public static final String OUTPUT_WORD_BEGIN_S_TOPIC_NAME = "words-begin-s";
-	public static final String OUTPUT_WORD_BEGIN_P_TOPIC_NAME = "words-begin-p";
-	public static final String OUTPUT_WORD_BEGIN_R_TOPIC_NAME = "words-begin-r";
 
 	public static final String OUTPUT_COUNTS_PER_WORD_TOPIC_NAME = "counts-per-words";
 	public static final String OUTPUT_WORD_COUNT_TOPIC_NAME = "word-count";
 
-	public static final List<String> usedTopics = List.of(TWEETS_TOPIC_NAME, WORDS_TOPIC_NAME);
+	public static final List<String> usedTopics = List.of(TWEETS_TOPIC_NAME, WORDS_TOPIC_NAME,
+			OUTPUT_COUNTS_PER_WORD_TOPIC_NAME, OUTPUT_WORD_COUNT_TOPIC_NAME);
 
 	static int createTopicIfAbsent(final String topicName, Properties adminProps)
 			throws InterruptedException, ExecutionException {
