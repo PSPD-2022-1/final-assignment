@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.twitter.clientlib.ApiException;
@@ -25,10 +26,15 @@ import com.twitter.clientlib.model.Tweet;
 
 public class RecentTweetSearcher {
 
-	static List<Post> getPosts(String query) {
+	public static List<Post> getPosts(String query) {
+		String twitterBearerToken = System.getenv("TWITTER_BEARER_TOKEN");
+
+		return getPosts(twitterBearerToken, query);
+	}
+
+	public static List<Post> getPosts(String twitterBearerToken, String query) {
 		List<Post> posts = new ArrayList<Post>();
 
-		String twitterBearerToken = System.getenv("TWITTER_BEARER_TOKEN");
 		TwitterCredentialsBearer twitterCredentialsBearer = new TwitterCredentialsBearer(twitterBearerToken);
 		TwitterApi apiInstance = new TwitterApi(twitterCredentialsBearer);
 		Get2TweetsSearchRecentResponse response;
@@ -41,28 +47,55 @@ public class RecentTweetSearcher {
 				posts.add(new Post(tweet.getId(), tweet.getText()));
 			});
 		} catch (ApiException e) {
-			System.err.println("Status code: " + e.getCode());
-			System.err.println("Reason: " + e.getResponseBody());
-			System.err.println("Response headers: " + e.getResponseHeaders());
+			System.out.println("Status code: " + e.getCode());
+			System.out.println("Reason: " + e.getResponseBody());
+			System.out.println("Response headers: " + e.getResponseHeaders());
 			e.printStackTrace();
 		}
 
 		return posts;
 	}
 
-	static void printPosts(List<Post> posts) {
+	public static List<Tweet> getTweets(String twitterBearerToken, String query) {
+		List<Tweet> tweets = new ArrayList<Tweet>();
+
+		TwitterCredentialsBearer twitterCredentialsBearer = new TwitterCredentialsBearer(twitterBearerToken);
+		TwitterApi apiInstance = new TwitterApi(twitterCredentialsBearer);
+		Get2TweetsSearchRecentResponse response;
+		try {
+			response = apiInstance.tweets().tweetsRecentSearch(query).execute();
+
+			tweets = response.getData();
+		} catch (ApiException e) {
+			System.out.println("Status code: " + e.getCode());
+			System.out.println("Reason: " + e.getResponseBody());
+			System.out.println("Response headers: " + e.getResponseHeaders());
+			e.printStackTrace();
+		}
+
+		return tweets;
+	}
+
+	public static void printPosts(List<Post> posts) {
 		for (Post p : posts) {
 			printPost(p);
 		}
 	}
 
-	static void printPost(Post p) {
+	public static void printPost(Post p) {
 		System.out.println("id=" + p.getId() + " " + "text='" + p.getText() + "'");
 	}
 
 	@javax.annotation.Nullable
-	static Stream<FilteredStreamingTweetResponse> getTweetStream(List<RuleNoId> rules) {
+	public static Stream<FilteredStreamingTweetResponse> getTweetStream(List<RuleNoId> rules) {
 		String twitterBearerToken = System.getenv("TWITTER_BEARER_TOKEN");
+
+		return getTweetStream(twitterBearerToken, rules);
+	}
+
+	@javax.annotation.Nullable
+	public static Stream<FilteredStreamingTweetResponse> getTweetStream(String twitterBearerToken,
+			List<RuleNoId> rules) {
 		TwitterCredentialsBearer twitterCredentialsBearer = new TwitterCredentialsBearer(twitterBearerToken);
 		TwitterApi apiInstance = new TwitterApi(twitterCredentialsBearer);
 
@@ -131,16 +164,16 @@ public class RecentTweetSearcher {
 				return tweet != null;
 			});
 		} catch (ApiException e) {
-			System.err.println("Status code: " + e.getCode());
-			System.err.println("Reason: " + e.getResponseBody());
-			System.err.println("Response headers: " + e.getResponseHeaders());
+			System.out.println("Status code: " + e.getCode());
+			System.out.println("Reason: " + e.getResponseBody());
+			System.out.println("Response headers: " + e.getResponseHeaders());
 			e.printStackTrace();
 		}
 
 		return null;
 	}
 
-	static Post tweetToPost(FilteredStreamingTweetResponse tweet) {
+	public static Post tweetToPost(FilteredStreamingTweetResponse tweet) {
 		return new Post(tweet.getData().getId(), tweet.getData().getText());
 	}
 
@@ -158,7 +191,7 @@ public class RecentTweetSearcher {
 		Stream<FilteredStreamingTweetResponse> tweets = RecentTweetSearcher.getTweetStream(rules);
 
 		if (tweets != null) {
-			for (FilteredStreamingTweetResponse tweet : tweets.limit(5).toList()) {
+			for (FilteredStreamingTweetResponse tweet : tweets.limit(5).collect(Collectors.toList())) {
 				System.out.println(tweet);
 				System.err.println("RecentTweetSearcher.tweetToPost()");
 				RecentTweetSearcher.printPost(tweetToPost(tweet));

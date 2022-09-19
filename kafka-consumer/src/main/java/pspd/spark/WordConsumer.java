@@ -28,22 +28,21 @@ public class WordConsumer {
 		SparkSession sparkSession = SparkSession.builder().appName("Word Consumer").getOrCreate();
 
 		System.out.println("Reading from topic");
-		Dataset<Row> caughtWords = sparkSession.readStream().format("kafka")
-				.option("kafka.bootstrap.servers", kafkaAddresses).option("subscribe", TopicUtil.INPUT_TOPIC_NAME)
+		Dataset<Row> tweetsWords = sparkSession.readStream().format("kafka")
+				.option("kafka.bootstrap.servers", kafkaAddresses).option("subscribe", TopicUtil.WORDS_TOPIC_NAME)
 				.option("startingOffsets", "earliest").load().selectExpr("CAST(key AS STRING) AS topicKey",
 						"CAST(value AS STRING) AS topicValue", "topic", "partition", "offset", "timestamp",
 						"timestampType");
-		caughtWords.repartition(PARTITIONS).createOrReplaceTempView("words");
+		tweetsWords.repartition(PARTITIONS).createOrReplaceTempView("tweets");
 		System.out.println("Read from topic");
 
 		System.out.println("Printing on console");
-		StreamingQuery consoleWords = caughtWords.writeStream().outputMode(OutputMode.Update()).format("console")
-				.start();
+		StreamingQuery consoleTweets = tweetsWords.writeStream().queryName("consoleTweets").outputMode(OutputMode.Update())
+				.format("console").start();
 
 		// words that start with 's'
-		Dataset<Row> sWords = caughtWords.where("topicValue LIKE 's%'")
-				.groupBy(functions.window(caughtWords.col("timestamp"), "3 seconds"), caughtWords.col("topicValue"))
-				.count();
+		Dataset<Row> sWords = tweetsWords.where("topicValue LIKE 's%'")
+				.groupBy(functions.window(tweetsWords.col("timestamp"), "3 seconds"), tweetsWords.col("topicValue")).count();
 		sWords.createOrReplaceTempView("sWords");
 
 		StreamingQuery consoleSWords = sWords.writeStream().queryName("consoleSWords").outputMode(OutputMode.Update())
@@ -56,9 +55,8 @@ public class WordConsumer {
 				.option("checkpointLocation", checkpointLocation + "/" + SWORDS_KAFKA_QUERY_NAME).start();
 
 		// words that start with 'p'
-		Dataset<Row> pWords = caughtWords.where("topicValue LIKE 'p%'")
-				.groupBy(functions.window(caughtWords.col("timestamp"), "3 seconds"), caughtWords.col("topicValue"))
-				.count();
+		Dataset<Row> pWords = tweetsWords.where("topicValue LIKE 'p%'")
+				.groupBy(functions.window(tweetsWords.col("timestamp"), "3 seconds"), tweetsWords.col("topicValue")).count();
 
 		StreamingQuery consolePWords = pWords.writeStream().queryName("consolePWords").outputMode(OutputMode.Update())
 				.format("console").start();
@@ -70,9 +68,8 @@ public class WordConsumer {
 				.option("checkpointLocation", checkpointLocation + "/" + PWORDS_KAFKA_QUERY_NAME).start();
 
 		// words that start with 'r'
-		Dataset<Row> rWords = caughtWords.where("topicValue LIKE 'r%'")
-				.groupBy(functions.window(caughtWords.col("timestamp"), "3 seconds"), caughtWords.col("topicValue"))
-				.count();
+		Dataset<Row> rWords = tweetsWords.where("topicValue LIKE 'r%'")
+				.groupBy(functions.window(tweetsWords.col("timestamp"), "3 seconds"), tweetsWords.col("topicValue")).count();
 
 		StreamingQuery consoleRWords = rWords.writeStream().queryName("consoleRWords").outputMode(OutputMode.Update())
 				.format("console").start();
@@ -84,9 +81,8 @@ public class WordConsumer {
 				.option("checkpointLocation", checkpointLocation + "/" + RWORDS_KAFKA_QUERY_NAME).start();
 
 		// words with 6 characters
-		Dataset<Row> length6Words = caughtWords.where("CHAR_LENGTH(topicValue) == 6")
-				.groupBy(functions.window(caughtWords.col("timestamp"), "3 seconds"), caughtWords.col("topicValue"))
-				.count();
+		Dataset<Row> length6Words = tweetsWords.where("CHAR_LENGTH(topicValue) == 6")
+				.groupBy(functions.window(tweetsWords.col("timestamp"), "3 seconds"), tweetsWords.col("topicValue")).count();
 
 		StreamingQuery consoleLength6Words = length6Words.writeStream().queryName("consoleLength6Words")
 				.outputMode(OutputMode.Update()).format("console").start();
@@ -98,9 +94,8 @@ public class WordConsumer {
 				.option("checkpointLocation", checkpointLocation + "/" + WORD_LENGTH6_KAFKA_QUERY_NAME).start();
 
 		// words with 8 characters
-		Dataset<Row> lenth8Words = caughtWords.where("CHAR_LENGTH(topicValue) == 8")
-				.groupBy(functions.window(caughtWords.col("timestamp"), "3 seconds"), caughtWords.col("topicValue"))
-				.count();
+		Dataset<Row> lenth8Words = tweetsWords.where("CHAR_LENGTH(topicValue) == 8")
+				.groupBy(functions.window(tweetsWords.col("timestamp"), "3 seconds"), tweetsWords.col("topicValue")).count();
 
 		StreamingQuery consoleLength8Words = lenth8Words.writeStream().queryName("consoleLength8Words")
 				.outputMode(OutputMode.Update()).format("console").start();
@@ -112,10 +107,9 @@ public class WordConsumer {
 				.option("checkpointLocation", checkpointLocation + "/" + WORD_LENGTH8_KAFKA_QUERY_NAME).start();
 
 		// words with 11 characters
-		Dataset<Row> length11Words = caughtWords.where("CHAR_LENGTH(topicValue) == 11")
+		Dataset<Row> length11Words = tweetsWords.where("CHAR_LENGTH(topicValue) == 11")
 
-				.groupBy(functions.window(caughtWords.col("timestamp"), "3 seconds"), caughtWords.col("topicValue"))
-				.count();
+				.groupBy(functions.window(tweetsWords.col("timestamp"), "3 seconds"), tweetsWords.col("topicValue")).count();
 
 		StreamingQuery consoleLength11Words = length11Words.writeStream().queryName("consoleLength11Words")
 				.outputMode(OutputMode.Update()).format("console").start();
@@ -155,7 +149,7 @@ public class WordConsumer {
 		sparkSession.streams().awaitAnyTermination(TIMEOUT_MS);
 
 		// terminate
-		consoleWords.stop();
+		consoleTweets.stop();
 
 		consoleSWords.stop();
 		consolePWords.stop();
